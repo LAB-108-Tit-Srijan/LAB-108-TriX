@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #EAE6DF;
+    color: #1F2937;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: #6F93C4;
+    color: #EAE6DF;
+  }
+}
+
+@layer components {
+  .container-main {
+    @apply max-w-screen-xl mx-auto px-12;
+  }
+
+  .glass-card {
+    background: rgba(234, 230, 223, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(217, 209, 190, 0.5);
+  }
+
+  .glass-nav {
+    background: rgba(234, 230, 223, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(217, 209, 190, 0.4);
+  }
+
+  .btn-primary {
+    @apply bg-nature-blue text-ivory px-8 py-4 rounded-2xl font-medium text-sm tracking-wide transition-all duration-300;
+    box-shadow: 0 4px 20px rgba(111, 147, 196, 0.3);
+  }
+
+  .btn-primary:hover {
+    background-color: #5a7db0;
+    box-shadow: 0 8px 30px rgba(111, 147, 196, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .hero-headline {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(52px, 7vw, 100px);
+    line-height: 0.95;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(32px, 3vw, 48px);
+    font-weight: 400;
+    color: #1F2937;
+  }
+
+  .card-hover {
+    @apply transition-all duration-500;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 24px 60px rgba(31, 41, 55, 0.12);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #EAE6DF;
+}
+::-webkit-scrollbar-thumb {
+  background: #B7C6D6;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6F93C4;
+}
