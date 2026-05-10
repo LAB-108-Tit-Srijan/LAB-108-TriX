@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const navLinks = [
   { name: 'Explore', path: '/explore' },
@@ -16,6 +17,16 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentUser, userRole, demoLogout } = useAuth();
+
+  const handleLogout = () => {
+    if (currentUser?.isDemo) {
+      demoLogout();
+    } else {
+      import('../firebase/auth').then(m => m.logoutUser());
+    }
+    navigate('/');
+  };
   
   const isInternal = ['/dashboard', '/ai-planner', '/planner', '/itinerary', '/explore', '/stays', '/hotel', '/rentals', '/community', '/safety', '/profile'].some(path => location.pathname.startsWith(path));
 
@@ -65,16 +76,20 @@ export default function Navbar() {
 
         {/* User / Auth Actions */}
         <div className="flex items-center gap-4">
-          {isInternal ? (
+          {currentUser ? (
             <div className="flex items-center gap-3 px-2 py-1.5 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30">
-              <button className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:bg-white/40 text-[#6B7280]">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-              </button>
-              <button onClick={() => navigate('/profile')} className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl hover:bg-white/40 transition-all">
-                <span className="text-xs font-semibold text-[#1F2937]">Aditya K.</span>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold" style={{ background: 'linear-gradient(135deg,#6F93C4,#B7C6D6)' }}>
-                  AK
+              <button onClick={() => navigate(userRole === 'HOST' ? '/host/dashboard' : '/profile')} className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl hover:bg-white/40 transition-all">
+                <span className="text-xs font-semibold text-[#1F2937] max-w-[80px] truncate">{currentUser.displayName || currentUser.email?.split('@')[0] || 'User'}</span>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold overflow-hidden" style={{ background: 'linear-gradient(135deg,#6F93C4,#B7C6D6)' }}>
+                  {currentUser.photoURL ? (
+                    <img src={currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    (currentUser.displayName || currentUser.email || 'U').charAt(0).toUpperCase()
+                  )}
                 </div>
+              </button>
+              <button onClick={handleLogout} title="Logout" className="w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:bg-red-50 text-gray-400 hover:text-red-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
               </button>
             </div>
           ) : (

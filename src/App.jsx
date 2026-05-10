@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AuthPage from './components/AuthPage';
@@ -14,8 +14,10 @@ import ProfilePage from './components/ProfilePage';
 import ReelCatcher from './components/ReelCatcher';
 import DestinationDetailPage from './components/DestinationDetailPage';
 import CommunityPage from './components/CommunityPage';
+import HostDashboard from './components/HostDashboard';
 import PageTransition from './components/PageTransition';
 import { AnimatePresence } from 'framer-motion';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 import HeroSection from './components/landing/HeroSection';
 import DestinationGrid from './components/landing/DestinationGrid';
@@ -38,39 +40,57 @@ function LandingPage() {
   );
 }
 
-function AppRoutes() {
+function ProtectedRoute({ children, roleRequired }) {
+  const { currentUser, userRole, loading } = useAuth();
+  
+  if (loading) return <div className="min-h-screen bg-[#EAE6DF] flex items-center justify-center">Loading...</div>;
+  if (!currentUser) return <Navigate to="/auth" />;
+  if (roleRequired && userRole !== roleRequired) {
+    return <Navigate to={userRole === 'HOST' ? '/host/dashboard' : '/dashboard'} />;
+  }
+  return children;
+}
+
+function AppContent() {
   const location = useLocation();
+  const isHostRoute = location.pathname.startsWith('/host');
+  
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
-        <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
-        <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
-        <Route path="/ai-planner" element={<PageTransition><AIPlanner /></PageTransition>} />
-        <Route path="/itinerary" element={<PageTransition><ItineraryPage /></PageTransition>} />
-        <Route path="/itinerary/:id" element={<PageTransition><ItineraryPage /></PageTransition>} />
-        <Route path="/explore" element={<PageTransition><ExplorePage /></PageTransition>} />
-        <Route path="/destination/:id" element={<PageTransition><DestinationDetailPage /></PageTransition>} />
-        <Route path="/stays" element={<PageTransition><StaysPage /></PageTransition>} />
-        <Route path="/hotel" element={<PageTransition><HotelDetailsPage /></PageTransition>} />
-        <Route path="/hotel/:id" element={<PageTransition><HotelDetailsPage /></PageTransition>} />
-        <Route path="/rentals" element={<PageTransition><RentalsPage /></PageTransition>} />
-        <Route path="/reel-catcher" element={<PageTransition><ReelCatcher /></PageTransition>} />
-        <Route path="/community" element={<PageTransition><CommunityPage /></PageTransition>} />
-        <Route path="/safety" element={<PageTransition><SafetyPage /></PageTransition>} />
-        <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
-      </Routes>
-    </AnimatePresence>
+    <div className="min-h-screen bg-[#EAE6DF] font-sans selection:bg-[#6F93C4] selection:text-white" style={{ color: '#1F2937' }}>
+      {!isHostRoute && <Navbar />}
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+          <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
+          
+          <Route path="/dashboard" element={<ProtectedRoute roleRequired="USER"><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
+          <Route path="/ai-planner" element={<ProtectedRoute><PageTransition><AIPlanner /></PageTransition></ProtectedRoute>} />
+          <Route path="/itinerary" element={<ProtectedRoute><PageTransition><ItineraryPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/itinerary/:id" element={<ProtectedRoute><PageTransition><ItineraryPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/explore" element={<PageTransition><ExplorePage /></PageTransition>} />
+          <Route path="/destination/:id" element={<PageTransition><DestinationDetailPage /></PageTransition>} />
+          <Route path="/stays" element={<PageTransition><StaysPage /></PageTransition>} />
+          <Route path="/hotel" element={<PageTransition><HotelDetailsPage /></PageTransition>} />
+          <Route path="/hotel/:id" element={<PageTransition><HotelDetailsPage /></PageTransition>} />
+          <Route path="/rentals" element={<PageTransition><RentalsPage /></PageTransition>} />
+          <Route path="/reel-catcher" element={<PageTransition><ReelCatcher /></PageTransition>} />
+          <Route path="/community" element={<PageTransition><CommunityPage /></PageTransition>} />
+          <Route path="/safety" element={<PageTransition><SafetyPage /></PageTransition>} />
+          <Route path="/profile" element={<ProtectedRoute><PageTransition><ProfilePage /></PageTransition></ProtectedRoute>} />
+          
+          <Route path="/host/dashboard" element={<ProtectedRoute roleRequired="HOST"><PageTransition><HostDashboard /></PageTransition></ProtectedRoute>} />
+        </Routes>
+      </AnimatePresence>
+    </div>
   );
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-[#EAE6DF] font-sans selection:bg-[#6F93C4] selection:text-white" style={{ color: '#1F2937' }}>
-        <Navbar />
-        <AppRoutes />
-      </div>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

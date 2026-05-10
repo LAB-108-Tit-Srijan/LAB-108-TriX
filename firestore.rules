@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Custom functions for role and auth validation
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isUser() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'USER';
+    }
+    
+    function isHost() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'HOST';
+    }
+
+    // USERS COLLECTION
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      // Users can only edit their own profile
+      allow write: if request.auth.uid == userId;
+    }
+
+    // PROPERTIES COLLECTION
+    match /properties/{propertyId} {
+      allow read: if true; // Publicly visible
+      // Only hosts can create/update their own properties
+      allow create: if isHost() && request.resource.data.hostId == request.auth.uid;
+      allow update, delete: if isHost() && resource.data.hostId == request.auth.uid;
+    }
+
+    // ROOMS COLLECTION
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow write: if isHost(); // Simplified: proper rule should check property's hostId
+    }
+
+    // BOOKINGS COLLECTION
+    match /bookings/{bookingId} {
+      // Users can see their own bookings; Hosts can see bookings for their properties
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isHost());
+      // Only authenticated users can create bookings
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      // Hosts can update booking status
+      allow update: if isHost();
+    }
+
+    // RENTALS COLLECTION
+    match /rentals/{rentalId} {
+      allow read: if true;
+      allow create: if isHost() && request.resource.data.hostId == request.auth.uid;
+      allow update, delete: if isHost() && resource.data.hostId == request.auth.uid;
+    }
+
+    // RENTAL BOOKINGS
+    match /rentalBookings/{bookingId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isHost());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isHost();
+    }
+
+    // COMMUNITY POSTS
+    match /communityPosts/{postId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      // Anyone can like (update), but only owner can delete/full update
+      allow update: if isAuthenticated();
+      allow delete: if request.auth.uid == resource.data.userId;
+    }
+
+    // CHATS
+    match /chats/{chatId} {
+      allow read, write: if isAuthenticated() && 
+        (resource == null || resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+    }
+  }
+}

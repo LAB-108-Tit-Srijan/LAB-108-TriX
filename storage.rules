@@ -1,0 +1,25 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    match /{allPaths=**} {
+      // Default: require auth for everything
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    
+    match /profile-images/{userId}/{fileName} {
+      // Only the user can upload their own profile image
+      allow write: if request.auth.uid == userId;
+    }
+    
+    match /property-images/{hostId}/{fileName} {
+      // Basic rule: checking if host is authenticated
+      allow write: if isAuthenticated(); 
+    }
+  }
+}

@@ -8,7 +8,8 @@ import ExperienceInsights from './stays/ExperienceInsights';
 import StaysMap from './stays/StaysMap';
 import AIAssistant from './dashboard/AIAssistant';
 import Footer from './Footer';
-import { stays, stayCategories, filterTags } from '../data/staysData';
+import { stays as staticStays, stayCategories, filterTags } from '../data/staysData';
+import { subscribeToProperties } from '../services/propertyService';
 
 export default function StaysPage() {
   const [visible, setVisible] = useState(false);
@@ -16,24 +17,41 @@ export default function StaysPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [activeTags, setActiveTags] = useState([]);
   const [maxBudget, setMaxBudget] = useState(25000);
+  const [liveProperties, setLiveProperties] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => { setTimeout(() => setVisible(true), 80); }, []);
+  useEffect(() => { 
+    setTimeout(() => setVisible(true), 80); 
+    const unsubscribe = subscribeToProperties((data) => {
+      setLiveProperties(data);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const combinedStays = useMemo(() => {
+    // Combine static stays with real-time host properties.
+    const combined = [...liveProperties, ...staticStays];
+    return combined;
+  }, [liveProperties]);
 
   const filteredStays = useMemo(() => {
-    return stays.filter(stay => {
+    return combinedStays.filter(stay => {
       const matchCat = selectedCategory === 'All' || stay.type === selectedCategory;
-      const matchSearch = stay.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          stay.location.toLowerCase().includes(searchQuery.toLowerCase());
+      const stayName = stay.name || '';
+      const stayLoc = stay.location || '';
+      const matchSearch = stayName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          stayLoc.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchBudget = stay.pricePerNight <= maxBudget;
+      const price = stay.pricePerNight || 0;
+      const matchBudget = price <= maxBudget;
       
       const matchTags = activeTags.length === 0 || 
-                        activeTags.some(tag => stay.tags && stay.tags.includes(tag));
+                        activeTags.some(tag => stay.tags && stay.tags.includes(tag)) ||
+                        activeTags.some(tag => stay.amenities && stay.amenities.includes(tag));
 
       return matchCat && matchSearch && matchBudget && matchTags;
     });
-  }, [searchQuery, selectedCategory, activeTags, maxBudget]);
+  }, [searchQuery, selectedCategory, activeTags, maxBudget, combinedStays]);
 
   return (
     <div style={{ background: '#EAE6DF', minHeight: '100vh' }}>
@@ -58,7 +76,7 @@ export default function StaysPage() {
         />
         <FeaturedStays 
           stays={filteredStays} 
-          onViewDetails={(stay) => navigate(`/hotel/${stay.id}`)}
+          onViewDetails={(stay) => navigate(`/hotel/${stay.propertyId || stay.id}`)}
         />
         <CuratedCollections />
         <ImmersiveShowcase />
