@@ -15,7 +15,14 @@ import ReelCatcher from './components/ReelCatcher';
 import DestinationDetailPage from './components/DestinationDetailPage';
 import CommunityPage from './components/CommunityPage';
 import HostDashboard from './components/HostDashboard';
+import HostPropertiesPage from './components/host/HostPropertiesPage';
+import HostBookingsPage from './components/host/HostBookingsPage';
+import HostEarningsPage from './components/host/HostEarningsPage';
+import HostRentalsPage from './components/host/HostRentalsPage';
+import HostGuestsPage from './components/host/HostGuestsPage';
+import HostCommunityPage from './components/host/HostCommunityPage';
 import PageTransition from './components/PageTransition';
+import FloatingAI from './components/FloatingAI';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -79,8 +86,15 @@ function AppContent() {
           <Route path="/profile" element={<ProtectedRoute><PageTransition><ProfilePage /></PageTransition></ProtectedRoute>} />
           
           <Route path="/host/dashboard" element={<ProtectedRoute roleRequired="HOST"><PageTransition><HostDashboard /></PageTransition></ProtectedRoute>} />
+          <Route path="/host/properties" element={<ProtectedRoute roleRequired="HOST"><PageTransition><HostPropertiesPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/host/bookings" element={<ProtectedRoute roleRequired="HOST"><PageTransition><HostBookingsPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/host/earnings" element={<ProtectedRoute roleRequired="HOST"><PageTransition><HostEarningsPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/host/rentals" element={<ProtectedRoute roleRequired="HOST"><PageTransition><HostRentalsPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/host/guests" element={<ProtectedRoute roleRequired="HOST"><PageTransition><HostGuestsPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/host/community" element={<ProtectedRoute roleRequired="HOST"><PageTransition><HostCommunityPage /></PageTransition></ProtectedRoute>} />
         </Routes>
       </AnimatePresence>
+      <FloatingAI />
     </div>
   );
 }

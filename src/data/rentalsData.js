@@ -23,7 +23,8 @@ export const rentals = [
     mountainSuitability: 'High',
     desc: 'The ultimate adventure tourer for Indian mountains. Built for tough terrains.',
     destinations: ['Spiti Valley', 'Ladakh', 'Himachal'],
-    specs: ['411cc Engine', 'Off-road Tires', 'Luggage Carrier']
+    specs: ['411cc Engine', 'Off-road Tires', 'Luggage Carrier'],
+    hostId: 'host-123'
   },
   {
     id: 'bike-2',
@@ -40,7 +41,8 @@ export const rentals = [
     mountainSuitability: 'Low',
     desc: 'Lightweight and easy to handle scooty for city travel.',
     destinations: ['Goa', 'Pondicherry', 'City Travel'],
-    specs: ['110cc Engine', 'Storage Space', 'Automatic']
+    specs: ['110cc Engine', 'Storage Space', 'Automatic'],
+    hostId: 'host-123'
   },
   {
     id: 'camp-1',
@@ -55,7 +57,8 @@ export const rentals = [
     aiRec: 'Cinematic stay for Tirthan Valley riverside camping.',
     desc: 'Waterproof luxury tent with ample space, inflatable mattress, and ventilation.',
     destinations: ['Tirthan Valley', 'Rishikesh', 'Kasol'],
-    specs: ['Waterproof', '4-Person Capacity', 'Ventilation Mesh']
+    specs: ['Waterproof', '4-Person Capacity', 'Ventilation Mesh'],
+    hostId: 'host-123'
   },
   {
     id: 'trek-1',
@@ -70,7 +73,8 @@ export const rentals = [
     aiRec: 'Recommended for Kheerganga and Triund treks.',
     desc: 'Complete set including trekking poles, waterproof jacket, and thermal wear.',
     destinations: ['Kheerganga', 'Triund', 'Hampta Pass'],
-    specs: ['Gore-Tex Jacket', 'Carbon Fiber Poles', '-10C Thermals']
+    specs: ['Gore-Tex Jacket', 'Carbon Fiber Poles', '-10C Thermals'],
+    hostId: 'host-123'
   },
   {
     id: 'photo-1',
@@ -85,7 +89,8 @@ export const rentals = [
     aiRec: 'Capture cinematic wide shots of Meghalaya waterfalls.',
     desc: 'Lightweight drone with 4K camera and 3 batteries.',
     destinations: ['Meghalaya', 'Kashmir', 'Munnar'],
-    specs: ['4K Video', '3 Batteries', 'ND Filters Included']
+    specs: ['4K Video', '3 Batteries', 'ND Filters Included'],
+    hostId: 'host-123'
   },
   {
     id: 'back-1',
@@ -100,6 +105,8 @@ export const rentals = [
     aiRec: 'Essential for solo travel across rural India.',
     desc: 'Includes 60L backpack, solar charger, hydration bladder, and survival kit.',
     destinations: ['All India', 'Northeast India'],
-    specs: ['60L Rucksack', '20000mAh Solar Bank', 'First Aid']
+    specs: ['60L Rucksack', '20000mAh Solar Bank', 'First Aid'],
+    hostId: 'host-123'
   }
 ];
+

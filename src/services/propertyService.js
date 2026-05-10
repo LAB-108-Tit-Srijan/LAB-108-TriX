@@ -1,81 +1,90 @@
-import { collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
+import { collection, doc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../firebase/firebaseConfig';
 
-const safeQuery = async (fn) => {
-  try {
-    return await fn();
-  } catch (e) {
-    console.warn('[propertyService] Firestore error (DB may not be enabled yet):', e.message);
-    return [];
-  }
-};
-
+// ─── PROPERTIES ────────────────────────────────────────────
 export const addProperty = async (propertyData) => {
+  const docRef = await addDoc(collection(db, 'properties'), {
+    ...propertyData,
+    status: 'active',
+    bookings: 0,
+    occupancyRate: 0,
+    rating: 0,
+    reviewCount: 0,
+    createdAt: new Date().toISOString(),
+  });
+  return docRef.id;
+};
+
+export const updateProperty = async (propertyId, data) => {
+  await updateDoc(doc(db, 'properties', propertyId), {
+    ...data,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
+export const deleteProperty = async (propertyId) => {
+  await deleteDoc(doc(db, 'properties', propertyId));
+};
+
+export const subscribeToHostProperties = (hostId, callback) => {
+  if (!hostId) { callback([]); return () => {}; }
   try {
-    const docRef = await addDoc(collection(db, 'properties'), {
-      ...propertyData,
-      createdAt: new Date().toISOString()
-    });
-    return docRef.id;
-  } catch (error) {
-    console.warn('[propertyService] addProperty failed:', error.message);
-    throw error;
-  }
-};
-
-export const getProperties = async () => {
-  return safeQuery(async () => {
-    const q = query(collection(db, 'properties'));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(d => ({ propertyId: d.id, ...d.data() }));
-  });
-};
-
-export const getHostProperties = async (hostId) => {
-  return safeQuery(async () => {
     const q = query(collection(db, 'properties'), where('hostId', '==', hostId));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(d => ({ propertyId: d.id, ...d.data() }));
-  });
+    return onSnapshot(q,
+      (snap) => callback(snap.docs.map(d => ({ propertyId: d.id, ...d.data() }))),
+      (err) => { console.warn('subscribeToHostProperties:', err.message); callback([]); }
+    );
+  } catch (e) { callback([]); return () => {}; }
 };
 
 export const subscribeToProperties = (callback) => {
   try {
-    const q = query(collection(db, 'properties'));
+    const q = query(collection(db, 'properties'), where('status', '==', 'active'));
     return onSnapshot(q,
-      (snapshot) => {
-        const properties = snapshot.docs.map(d => ({ propertyId: d.id, ...d.data() }));
-        callback(properties);
-      },
-      (error) => {
-        console.warn('[propertyService] subscribeToProperties error (DB may not be enabled):', error.message);
-        callback([]); // return empty array so UI doesn't crash
-      }
+      (snap) => callback(snap.docs.map(d => ({ propertyId: d.id, ...d.data() }))),
+      (err) => { console.warn('subscribeToProperties:', err.message); callback([]); }
     );
-  } catch (e) {
-    console.warn('[propertyService] subscribeToProperties setup failed:', e.message);
-    callback([]);
-    return () => {};
-  }
+  } catch (e) { callback([]); return () => {}; }
 };
 
-export const subscribeToHostProperties = (hostId, callback) => {
-  if (!hostId) return () => {};
+// ─── ROOMS ─────────────────────────────────────────────────
+export const addRoom = async (propertyId, roomData) => {
+  const docRef = await addDoc(collection(db, 'rooms'), {
+    ...roomData,
+    propertyId,
+    createdAt: new Date().toISOString(),
+  });
+  return docRef.id;
+};
+
+export const updateRoom = async (roomId, data) => {
+  await updateDoc(doc(db, 'rooms', roomId), data);
+};
+
+export const deleteRoom = async (roomId) => {
+  await deleteDoc(doc(db, 'rooms', roomId));
+};
+
+export const subscribeToPropertyRooms = (propertyId, callback) => {
+  if (!propertyId) { callback([]); return () => {}; }
   try {
-    const q = query(collection(db, 'properties'), where('hostId', '==', hostId));
+    const q = query(collection(db, 'rooms'), where('propertyId', '==', propertyId));
     return onSnapshot(q,
-      (snapshot) => {
-        const properties = snapshot.docs.map(d => ({ propertyId: d.id, ...d.data() }));
-        callback(properties);
-      },
-      (error) => {
-        console.warn('[propertyService] subscribeToHostProperties error:', error.message);
-        callback([]);
-      }
+      (snap) => callback(snap.docs.map(d => ({ roomId: d.id, ...d.data() }))),
+      (err) => { console.warn('subscribeToPropertyRooms:', err.message); callback([]); }
     );
+  } catch (e) { callback([]); return () => {}; }
+};
+
+// ─── IMAGE UPLOAD ───────────────────────────────────────────
+export const uploadPropertyImage = async (file, propertyId) => {
+  try {
+    const storageRef = ref(storage, `properties/${propertyId}/${Date.now()}_${file.name}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    return await getDownloadURL(snapshot.ref);
   } catch (e) {
-    console.warn('[propertyService] subscribeToHostProperties setup failed:', e.message);
-    callback([]);
-    return () => {};
+    console.warn('Image upload failed:', e.message);
+    return null;
   }
 };

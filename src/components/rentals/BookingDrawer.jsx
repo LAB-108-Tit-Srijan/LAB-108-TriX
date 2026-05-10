@@ -1,6 +1,8 @@
 import { useState, Component } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
+import { createBooking } from '../../services/bookingService';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -23,6 +25,7 @@ class ErrorBoundary extends Component {
 }
 
 function BookingDrawerContent({ rental, onClose }) {
+  const { currentUser } = useAuth();
   const [step, setStep] = useState(1);
   const [duration, setDuration] = useState(3);
   const [quantity, setQuantity] = useState(1);
@@ -31,6 +34,8 @@ function BookingDrawerContent({ rental, onClose }) {
   const [deliveryType, setDeliveryType] = useState('Pickup');
   const [size, setSize] = useState('L');
   const [licenseUploaded, setLicenseUploaded] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingId, setBookingId] = useState('');
 
   if (!rental) return null;
 
@@ -80,6 +85,47 @@ function BookingDrawerContent({ rental, onClose }) {
     setAddons(prev => prev.includes(name) ? prev.filter(a => a !== name) : [...prev, name]);
   };
 
+  const handleBooking = async () => {
+    if (!currentUser) {
+      alert("Please login to book.");
+      return;
+    }
+
+    setIsBooking(true);
+    try {
+      const bookingData = {
+        userId: currentUser.uid,
+        userName: currentUser.displayName || 'Guest User',
+        userEmail: currentUser.email,
+        propertyId: rental.id,
+        propertyName: rental.title,
+        propertyType: 'RENTAL',
+        category: rental.category,
+        checkIn: new Date().toISOString(), // Rentals are immediate
+        duration,
+        quantity,
+        totalPrice: costs.total,
+        addons,
+        pickupLocation: isBike ? pickup : null,
+        deliveryType: isTent ? deliveryType : null,
+        size: isTrek ? size : null,
+        status: 'PENDING',
+        bookingStatus: 'PENDING',
+        createdAt: new Date().toISOString(),
+        hostId: rental.hostId || 'host-123', // Dynamic host ID from rental data
+      };
+
+      const result = await createBooking(bookingData);
+      setBookingId(result.id);
+      setStep(4);
+    } catch (error) {
+      console.error("Rental booking error:", error);
+      alert("Failed to create booking. Please try again.");
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
   // Use a portal to render at the top level of document body, escaping CSS filters/transforms
   const drawerContent = (
     <AnimatePresence>
@@ -110,7 +156,7 @@ function BookingDrawerContent({ rental, onClose }) {
                   <img src={rental.image} alt={rental.title} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-[#6F93C4] uppercase tracking-wider">{rental.category.split(' ')[0]}</div>
+                  <div className="text-xs font-bold text-[#6F93C4] uppercase tracking-wider">{rental.category?.split(' ')[0]}</div>
                   <h3 className="text-sm font-medium text-gray-900 leading-tight">{rental.title}</h3>
                   <div className="text-xs text-gray-500">₹{rental.price}/day</div>
                 </div>
@@ -260,7 +306,7 @@ function BookingDrawerContent({ rental, onClose }) {
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
                 </div>
                 <h3 className="text-2xl font-medium text-gray-900 mb-2" style={{ fontFamily: 'Playfair Display,serif' }}>Booking Confirmed</h3>
-                <p className="text-sm text-gray-500 mb-6">Your booking ID is <span className="font-bold text-gray-900">#TRP-{Math.floor(Math.random() * 10000)}</span>. Details sent to email.</p>
+                <p className="text-sm text-gray-500 mb-6">Your booking ID is <span className="font-bold text-gray-900">#{bookingId || 'TRP-' + Math.floor(Math.random() * 10000)}</span>. Details sent to email.</p>
                 
                 <div className="bg-gray-50 p-5 rounded-xl w-full text-left border border-gray-100">
                   {isBike && (
@@ -295,16 +341,21 @@ function BookingDrawerContent({ rental, onClose }) {
               )}
               {step < 4 ? (
                 <button 
+                  disabled={isBooking}
                   onClick={() => {
                     if (step === 1 && isBike && !licenseUploaded) {
                       alert("Please upload your Driving License first.");
                       return;
                     }
-                    setStep(step + 1);
+                    if (step === 3) {
+                      handleBooking();
+                    } else {
+                      setStep(step + 1);
+                    }
                   }} 
-                  className="flex-1 px-6 py-3 rounded-xl bg-[#1F2937] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#6F93C4] transition-colors shadow-lg hover:shadow-[#6F93C4]/30"
+                  className="flex-1 px-6 py-3 rounded-xl bg-[#1F2937] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#6F93C4] transition-colors shadow-lg hover:shadow-[#6F93C4]/30 disabled:opacity-50"
                 >
-                  {step === 3 ? 'Pay Securely' : 'Next Step'}
+                  {isBooking ? 'Processing...' : (step === 3 ? 'Pay Securely' : 'Next Step')}
                 </button>
               ) : (
                 <button 

@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createBooking } from '../../services/bookingService';
+import { useAuth } from '../../context/AuthContext';
 
 export default function StayBookingDrawer({ isOpen, onClose, stay, initialRoom }) {
+  const { currentUser } = useAuth();
   const [step, setStep] = useState(1);
   const [selectedRoom, setSelectedRoom] = useState(initialRoom || (stay?.rooms ? stay.rooms[0] : null));
   const [checkIn, setCheckIn] = useState('');
@@ -10,6 +13,7 @@ export default function StayBookingDrawer({ isOpen, onClose, stay, initialRoom }
   const [guests, setGuests] = useState(2);
   const [roomsCount, setRoomsCount] = useState(1);
   const [addons, setAddons] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Guest details
   const [guestName, setGuestName] = useState('');
@@ -62,6 +66,37 @@ export default function StayBookingDrawer({ isOpen, onClose, stay, initialRoom }
   const toggleAddon = (id) => {
     if (addons.includes(id)) setAddons(addons.filter(a => a !== id));
     else setAddons([...addons, id]);
+  };
+
+  const handleFinalBooking = async () => {
+    setIsSubmitting(true);
+    try {
+      const bookingData = {
+        userId: currentUser?.uid || 'anonymous',
+        guestName: guestName || currentUser?.displayName || 'Anonymous Guest',
+        guestEmail: guestEmail || currentUser?.email || '',
+        guestPhone,
+        propertyId: stay.propertyId || stay.id,
+        propertyName: stay.name,
+        roomType: selectedRoom?.type || 'Standard',
+        checkIn,
+        checkOut,
+        guests,
+        nights,
+        totalPrice: grandTotal,
+        type: 'STAY',
+        addons,
+        bookingStatus: 'PENDING'
+      };
+      
+      await createBooking(bookingData);
+      setStep(7);
+    } catch (error) {
+      console.error('Booking failed:', error);
+      alert('Failed to process booking. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const drawerVariants = {
@@ -309,11 +344,12 @@ export default function StayBookingDrawer({ isOpen, onClose, stay, initialRoom }
                   </button>
                 )}
                 <button 
-                  onClick={() => setStep(step + 1)}
-                  className="flex-1 py-3 rounded-xl font-bold text-white transition-all shadow-md"
+                  onClick={step === 6 ? handleFinalBooking : () => setStep(step + 1)}
+                  disabled={isSubmitting}
+                  className="flex-1 py-3 rounded-xl font-bold text-white transition-all shadow-md disabled:opacity-50"
                   style={{ background: 'linear-gradient(135deg,#6F93C4,#5a7db0)' }}
                 >
-                  {step === 1 ? 'Select Dates' : step === 6 ? 'Pay Securely' : 'Continue'}
+                  {isSubmitting ? 'Processing...' : step === 1 ? 'Select Dates' : step === 6 ? 'Pay Securely' : 'Continue'}
                 </button>
               </div>
             )}
