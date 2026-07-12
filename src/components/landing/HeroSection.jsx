@@ -36,7 +36,7 @@ export default function HeroSection() {
 
             {/* Headline */}
             <div>
-              <h1 className="text-[48px] md:text-[68px] lg:text-[76px] leading-[1.05] font-medium tracking-tight mb-6" style={{ color: '#1F2937', fontFamily: 'Playfair Display, serif' }}>
+              <h1 className="text-[48px] md:text-[68px] lg:text-[76px] leading-[1.05] font-medium tracking-tight mb-6" style={{ color: '#1F2937', fontFamily: 'Georgia, serif' }}>
                 Travel Smarter. <br />
                 <span style={{ color: '#6F93C4' }}>Explore Deeper.</span>
               </h1>
